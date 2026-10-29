@@ -133,8 +133,8 @@ flowchart LR
           </tr>
           <tr>
             <td><code>projects.json</code> への登録</td>
-            <td>不要</td>
-            <td>このページの一覧生成 + <strong>エンジンのドロップボックスにも使われる</strong>。<code>?kasc=</code> で開いたエンジンは .kasc の祖先にある <code>projects.json</code>（群マニフェスト）を読み、同一ホスト上の他プロジェクトをドロップボックスに並べます。登録すれば CDN 版でも複数プロジェクトを切替えられます</td>
+            <td><strong>必須</strong>（一覧・選択肢に出すため）</td>
+            <td>このページの一覧 + エンジンのドロップボックス（<code>?kasc=</code> で開いたエンジンが .kasc の祖先として読む群マニフェスト）。未登録・無タイトルの単独プロジェクトは <code>&lt;id&gt;</code>（フォルダ名）をプロジェクト名として扱います</td>
           </tr>
         </table>
         <ol>
@@ -144,7 +144,7 @@ flowchart LR
         </ol>
         <pre>
 kasugai_canvas_weGIS/
-├─ projects.json       # プロジェクトマニフェスト（一覧表示用・再生には不要）
+├─ projects.json       # プロジェクトマニフェスト（一覧・選択肢に必須。未登録時は <id> を名に使う）
 └─ &lt;id&gt;/             # プロジェクト（必須: フォルダ名 = プロジェクトID。
                        #   一覧・?kasc= URL は &lt;id&gt;/kasugai_canvas.kasc を前提）
    ├─ kasugai_canvas.kasc   # ← 必須。CDN エンジンの ?kasc= に指定する URL（これだけで動く）
