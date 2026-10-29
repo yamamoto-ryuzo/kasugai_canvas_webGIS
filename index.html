@@ -35,13 +35,10 @@
   <div class="page">
   <nav class="toc">
     <div class="toc-title">目次</div>
-    <a href="#s1">1. 全体構成</a>
-    <a href="#s2">2. 配置するファイル</a>
-    <a href="#s3">3. 追加手順</a>
-    <a href="#s4">4. 再生 URL の形式</a>
-    <a href="#s5">5. プロジェクト一覧</a>
-    <a href="#s6">6. 収録データ</a>
-    <a href="#s7">7. 注意点</a>
+    <a href="#s1">1. このサイトについて</a>
+    <a href="#s2">2. プロジェクト一覧</a>
+    <a href="#s3">3. 収録データ</a>
+    <a href="#s4">4. 注意点</a>
     <a href="#links">関連リンク</a>
   </nav>
   <div class="container">
@@ -124,10 +121,6 @@
     const ENGINES = ['cesium', 'maplibre', 'openlayers', 'leaflet', 'gsimaps'];
     const CDN = 'https://yamamoto-ryuzo.github.io/kasugai-canvas-web';
     const base = location.origin + location.pathname.replace(/[^/]*$/, '');
-
-    document.getElementById('urlfmt').textContent =
-      CDN + '/<stage>/<engine>/?kasc=<このサイトの .kasc URL>\n例: ' +
-      CDN + '/stable/cesium/?kasc=' + encodeURIComponent(base + 'default/kasugai_canvas.kasc');
 
     fetch('projects.json').then(r => r.json()).then(list => {
       const ul = document.getElementById('plist');
