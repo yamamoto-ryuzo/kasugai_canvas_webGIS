@@ -101,19 +101,48 @@ flowchart LR
   </table>
 
   <h2>5. テストデータの追加方法</h2>
+  <p>再生に必要な最低限は <strong>.kasc ファイル1つだけ</strong>です。必要なファイルと条件は以下の通りです。</p>
+  <table>
+    <tr><th>ファイル</th><th>必須</th><th>条件</th></tr>
+    <tr>
+      <td><code>&lt;id&gt;/kasugai_canvas.kasc</code></td>
+      <td><strong>必須</strong></td>
+      <td><code>?kasc=</code> で指定する本体。全レイヤーが URL 直参照ならこれだけで動きます</td>
+    </tr>
+    <tr>
+      <td><code>&lt;id&gt;/DATA/</code></td>
+      <td>条件付き</td>
+      <td>.kasc 内で <code>DATA/...</code> 等の相対参照しているローカルデータがある場合のみ（.kasc と同じフォルダに置く）</td>
+    </tr>
+    <tr>
+      <td><code>&lt;id&gt;/project.json</code></td>
+      <td>任意</td>
+      <td>プロジェクト名の表示に使用（無くても再生可）</td>
+    </tr>
+    <tr>
+      <td><code>&lt;id&gt;/bookmarks.xml</code> 等</td>
+      <td>条件付き</td>
+      <td>.kasc の <code>bookmark:</code> 等で参照される場合のみ</td>
+    </tr>
+    <tr>
+      <td><code>projects.json</code> への登録</td>
+      <td>不要</td>
+      <td>このページの一覧に出すためだけのもの。.kasc の直 URL を <code>?kasc=</code> に渡せば登録なしで再生できます</td>
+    </tr>
+  </table>
   <ol>
     <li>QGIS プラグイン <code>geo_webview</code> の <code>Export</code> で <code>.kasc + DATA/</code> を出力</li>
     <li>このリポジトリに <code>&lt;プロジェクトID&gt;/</code> フォルダとして配置</li>
-    <li><code>projects.json</code> に <code>{"id": "...", "title": "..."}</code> を追記して push（Pages に数分で反映）</li>
+    <li>一覧に出す場合は <code>projects.json</code> に <code>{"id": "...", "title": "..."}</code> を追記して push（Pages に数分で反映）</li>
   </ol>
   <pre>
 kasugai_canvas_weGIS/
 ├─ index.html          # このページ
-├─ projects.json       # プロジェクトマニフェスト
+├─ projects.json       # プロジェクトマニフェスト（一覧表示用・再生には不要）
 └─ &lt;id&gt;/             # プロジェクト
-   ├─ kasugai_canvas.kasc
-   ├─ project.json     # タイトル等（任意）
-   └─ DATA/            # プロジェクト専用データ
+   ├─ kasugai_canvas.kasc   # ← 再生に必須（これだけで動く）
+   ├─ project.json          # 任意
+   └─ DATA/                 # 相対参照データがある場合のみ
   </pre>
 
   <h2>6. 注意点</h2>
