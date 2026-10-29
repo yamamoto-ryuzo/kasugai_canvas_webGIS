@@ -99,7 +99,7 @@ flowchart LR
           <tr>
             <td><code>&lt;id&gt;/project.json</code></td>
             <td>任意</td>
-            <td>プロジェクト名の表示に使用（無くても再生可）</td>
+            <td><strong>単独プロジェクトの表示名として優先</strong>（一覧・複数選択では <code>projects.json</code> の <code>title</code> が優先）。無くても再生可・その場合は <code>&lt;id&gt;</code>・ファイル名が使われる</td>
           </tr>
           <tr>
             <td><code>projects.json</code> への登録</td>
@@ -124,7 +124,7 @@ flowchart LR
           <li><strong><code>&lt;id&gt;/kasugai_canvas.kasc</code>【必須】</strong> —
             QGIS プラグイン <code>geo_webview</code> の <code>Export</code> 出力をそのまま置きます。<strong>このファイルの URL を CDN エンジンの <code>?kasc=</code> に指定する</strong>のが再生の本体で、これだけ置けば動きます。</li>
           <li><strong><code>&lt;id&gt;/project.json</code>（任意）</strong> —
-            表示名を付けたい場合に <code>{"title": "&lt;プロジェクト名&gt;"}</code> と書きます（無ければ <code>&lt;id&gt;</code>・ファイル名で表示）。</li>
+            表示名を付けたい場合に <code>{"title": "&lt;プロジェクト名&gt;"}</code> と書きます。単独プロジェクトではこの名前が優先され、複数・一覧では <code>projects.json</code> の <code>title</code> が優先されます（無ければ <code>&lt;id&gt;</code>・ファイル名で表示）。</li>
           <li><strong><code>&lt;id&gt;/DATA/</code>（条件付き）</strong> —
             .kasc が <code>DATA/...</code> 等の相対参照を持つローカルデータがある場合のみ、.kasc と同じフォルダに置きます。</li>
           <li><strong>push</strong> — GitHub Pages に数分で反映されます。</li>
