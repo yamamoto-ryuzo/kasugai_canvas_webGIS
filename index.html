@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>kasugai_canvas_weGIS — CDN ホスト版テストデータ</title>
+  <style>
+    body { font-family: system-ui, "Segoe UI", sans-serif; max-width: 900px; margin: 2em auto; padding: 0 1em; color: #1a2230; }
+    h1 { border-bottom: 2px solid #1668b4; padding-bottom: .3em; }
+    code { background: #eef3f9; padding: .1em .35em; border-radius: 4px; }
+    pre { background: #f6f8fa; padding: .8em; border-radius: 8px; overflow-x: auto; }
+    li { margin: .6em 0; }
+    .engines a { margin-right: .6em; }
+    .note { color: #5a6577; font-size: .9em; }
+  </style>
+</head>
+<body>
+  <h1>kasugai_canvas_weGIS</h1>
+  <p>
+    KASUGAI Canvas CDN ホスト版（<a href="https://yamamoto-ryuzo.github.io/kasugai-canvas-web/">kasugai-canvas-web</a>）向けの
+    <strong>テストデータ（.kasc + DATA/）配信サイト</strong>です。
+    エンジンは CDN から、データはこのサイトから読み込む「サーバレス WebGIS」の動作確認に使います。
+  </p>
+
+  <h2>プロジェクト一覧</h2>
+  <p class="note">各プロジェクトを 5 エンジンのいずれかで開けます（リンク先 = CDN ホスト版エンジン + <code>?kasc=このサイトの.kasc</code>）。</p>
+  <ul id="plist"><li>読み込み中…</li></ul>
+
+  <h2>URL 形式</h2>
+  <pre id="urlfmt"></pre>
+
+  <h2>データの追加方法</h2>
+  <ol>
+    <li>QGIS geo_webview の <code>Export</code> で <code>.kasc + DATA/</code> を出力</li>
+    <li>このリポジトリに <code>&lt;プロジェクトID&gt;/</code> フォルダとして配置</li>
+    <li><code>projects.json</code> に <code>{"id","title"}</code> を追記して push</li>
+  </ol>
+
+  <script>
+    const STAGES  = { stable: '安定版', unstable: '開発版' };
+    const ENGINES = ['cesium', 'maplibre', 'openlayers', 'leaflet', 'gsimaps'];
+    const CDN = 'https://yamamoto-ryuzo.github.io/kasugai-canvas-web';
+    const base = location.origin + location.pathname.replace(/[^/]*$/, '');
+
+    document.getElementById('urlfmt').textContent =
+      CDN + '/<stage>/<engine>/?kasc=<このサイトの .kasc URL>\n例: ' +
+      CDN + '/stable/cesium/?kasc=' + encodeURIComponent(base + 'default/kasugai_canvas.kasc');
+
+    fetch('projects.json').then(r => r.json()).then(list => {
+      const ul = document.getElementById('plist');
+      ul.innerHTML = '';
+      for (const p of list) {
+        const kasc = base + p.id + '/kasugai_canvas.kasc';
+        const li = document.createElement('li');
+        const links = ENGINES.map(e =>
+          `<a href="${CDN}/stable/${e}/?kasc=${encodeURIComponent(kasc)}" target="_blank" rel="noopener">${e}</a>`
+        ).join(' ');
+        const dev = ENGINES.map(e =>
+          `<a href="${CDN}/unstable/${e}/?kasc=${encodeURIComponent(kasc)}" target="_blank" rel="noopener">${e}</a>`
+        ).join(' ');
+        li.innerHTML = `<strong>${p.title}</strong>（<code>${p.id}</code>）` +
+          `<div class="engines">stable: ${links}</div>` +
+          `<div class="engines">unstable: ${dev}</div>`;
+        ul.appendChild(li);
+      }
+    }).catch(() => {
+      document.getElementById('plist').innerHTML = '<li>projects.json の読み込みに失敗しました</li>';
+    });
+  </script>
+</body>
+</html>
