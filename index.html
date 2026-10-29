@@ -110,11 +110,24 @@ flowchart LR
       </section>
 
       <section>
-        <h2>3. 追加手順</h2>
+        <h2>3. 追加手順（ファイル順に設定）</h2>
         <ol>
-          <li>QGIS プラグイン <code>geo_webview</code> の <code>Export</code> で <code>.kasc + DATA/</code> を出力</li>
-          <li>このリポジトリに <code>&lt;プロジェクトID&gt;/</code> フォルダとして配置</li>
-          <li><code>projects.json</code> に <code>{"id": "...", "title": "..."}</code> を追記して push（Pages に数分で反映）</li>
+          <li><strong><code>projects.json</code>【必須】</strong> —
+            リポジトリ直下の群マニフェストに、プロジェクトを1エントリ追記します。
+            <pre>[
+  { "id": "default", "title": "サンプルプロジェクト" },
+  { "id": "&lt;id&gt;", "title": "&lt;プロジェクト名&gt;" }
+]</pre>
+            未登録でも単独プロジェクトとしては動きますが（<code>&lt;id&gt;</code> 等が名に使われる）、一覧・選択肢に出すには登録が必須です。</li>
+          <li><strong><code>&lt;id&gt;/</code>【必須】</strong> —
+            フォルダ名 = プロジェクトID で作ります。<code>?kasc=</code> の URL は <code>…/kasugai_canvas_weGIS/&lt;id&gt;/kasugai_canvas.kasc</code> になる前提です。</li>
+          <li><strong><code>&lt;id&gt;/kasugai_canvas.kasc</code>【必須】</strong> —
+            QGIS プラグイン <code>geo_webview</code> の <code>Export</code> 出力をそのまま置きます。<strong>このファイルの URL を CDN エンジンの <code>?kasc=</code> に指定する</strong>のが再生の本体で、これだけ置けば動きます。</li>
+          <li><strong><code>&lt;id&gt;/project.json</code>（任意）</strong> —
+            表示名を付けたい場合に <code>{"title": "&lt;プロジェクト名&gt;"}</code> と書きます（無ければ <code>&lt;id&gt;</code>・ファイル名で表示）。</li>
+          <li><strong><code>&lt;id&gt;/DATA/</code>（条件付き）</strong> —
+            .kasc が <code>DATA/...</code> 等の相対参照を持つローカルデータがある場合のみ、.kasc と同じフォルダに置きます。</li>
+          <li><strong>push</strong> — GitHub Pages に数分で反映されます。</li>
         </ol>
       </section>
 
