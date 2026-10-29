@@ -1,3 +1,3 @@
-# kasugai_canvas_weGIS
+# kasugai_canvas_webGIS
 
-https://yamamoto-ryuzo.github.io/kasugai_canvas_weGIS/
+https://yamamoto-ryuzo.github.io/kasugai_canvas_webGIS/
