@@ -9,6 +9,19 @@
     .note { color: #5a6577; font-size: .9em; }
     .engines a { margin-right: .6em; }
     .mermaid { background: #f6f8fa; border-radius: 8px; padding: 1em; }
+    .ftree { font-family: ui-monospace, Consolas, "Noto Sans JP", monospace; background: #f6f8fa; border-radius: 8px; padding: 14px 18px; }
+    .ftree .ft-root { font-weight: 700; margin-bottom: 4px; }
+    .ftree ul { list-style: none; margin: 0; padding-left: 0; }
+    .ftree ul ul { border-left: 1px solid #c9d2dc; margin-left: .55em; }
+    .ftree li { position: relative; padding: 3px 0 3px 1.4em; }
+    .ftree ul ul li::before { content: ""; position: absolute; left: 0; top: .95em; width: 1em; border-top: 1px solid #c9d2dc; }
+    .ftree ul ul li:last-child::after { content: ""; position: absolute; left: -1px; top: 1em; bottom: 0; background: #f6f8fa; }
+    .ft-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5em; }
+    .ft-tag { font-size: .7em; padding: .1em .55em; border-radius: 8px; font-weight: 700; white-space: nowrap; }
+    .ft-tag.req { background: #e9f7ee; color: #237a44; border: 1px solid #2e9e56; }
+    .ft-tag.opt { background: #eef0f3; color: #5a6577; border: 1px solid #9aa5b1; }
+    .ft-tag.cond { background: #fdf3e3; color: #b26a00; border: 1px solid #d9a03f; }
+    .ft-note { color: #5a6577; font-family: inherit; font-size: .85em; }
   </style>
 </head>
 <body>
@@ -142,20 +155,28 @@ flowchart LR
           <li>このリポジトリに <code>&lt;プロジェクトID&gt;/</code> フォルダとして配置</li>
           <li>一覧に出す場合は <code>projects.json</code> に <code>{"id": "...", "title": "..."}</code> を追記して push（Pages に数分で反映）</li>
         </ol>
-        <pre class="mermaid">
-flowchart TB
-  ROOT["kasugai_canvas_weGIS/"]
-  ROOT --> PJ["projects.json【必須】<br/>群マニフェスト。一覧・選択肢に使用<br/>未登録時は単独プロジェクトとして &amp;lt;id&amp;gt; 等を名に使う"]
-  ROOT --> DIR["&amp;lt;id&amp;gt;/【必須】<br/>フォルダ名 = プロジェクトID<br/>?kasc= URL は &amp;lt;id&amp;gt;/kasugai_canvas.kasc を前提"]
-  DIR --> KASC["kasugai_canvas.kasc【必須】<br/>CDN エンジンの ?kasc= に指定する URL<br/>これだけで動く"]
-  DIR --> PRJ["project.json（任意）<br/>プロジェクト名の表示に使用"]
-  DIR --> DATA["DATA/（条件付き）<br/>相対参照データがある場合のみ"]
-
-  classDef req fill:#e9f7ee,stroke:#2e9e56,color:#1a2230
-  classDef opt fill:#f6f8fa,stroke:#9aa5b1,color:#5a6577
-  class PJ,DIR,KASC req
-  class PRJ,DATA opt
-        </pre>
+        <div class="ftree">
+          <div class="ft-root">kasugai_canvas_weGIS/</div>
+          <ul>
+            <li>
+              <div class="ft-row"><code>projects.json</code><span class="ft-tag req">必須</span><span class="ft-note">群マニフェスト。一覧・選択肢に使用。未登録時は単独プロジェクトとして <code>&lt;id&gt;</code> 等を名に使う</span></div>
+            </li>
+            <li>
+              <div class="ft-row"><code>&lt;id&gt;/</code><span class="ft-tag req">必須</span><span class="ft-note">フォルダ名 = プロジェクトID。<code>?kasc=</code> URL は <code>&lt;id&gt;/kasugai_canvas.kasc</code> を前提</span></div>
+              <ul>
+                <li>
+                  <div class="ft-row"><code>kasugai_canvas.kasc</code><span class="ft-tag req">必須</span><span class="ft-note">CDN エンジンの <code>?kasc=</code> に指定する URL（これだけで動く）</span></div>
+                </li>
+                <li>
+                  <div class="ft-row"><code>project.json</code><span class="ft-tag opt">任意</span><span class="ft-note">プロジェクト名の表示に使用</span></div>
+                </li>
+                <li>
+                  <div class="ft-row"><code>DATA/</code><span class="ft-tag cond">条件付き</span><span class="ft-note">相対参照データがある場合のみ</span></div>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </div>
       </section>
 
       <section>
