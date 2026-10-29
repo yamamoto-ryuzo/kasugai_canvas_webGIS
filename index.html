@@ -134,7 +134,7 @@ flowchart LR
           <tr>
             <td><code>projects.json</code> への登録</td>
             <td>不要</td>
-            <td>このページの一覧生成専用。CDN のプロジェクト選択ドロップボックスはエンジン同梱の manifest を読みますが、<strong>CDN には projects/ を同梱しない</strong>ため、外部プロジェクトは <code>?kasc=</code> 直指定で開く形です（開いたものは <code>project.json</code> のタイトルで自動表示される）</td>
+            <td>このページの一覧生成 + <strong>エンジンのドロップボックスにも使われる</strong>。<code>?kasc=</code> で開いたエンジンは .kasc の祖先にある <code>projects.json</code>（群マニフェスト）を読み、同一ホスト上の他プロジェクトをドロップボックスに並べます。登録すれば CDN 版でも複数プロジェクトを切替えられます</td>
           </tr>
         </table>
         <ol>
