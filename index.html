@@ -37,6 +37,9 @@
   <p>
     このサイトは <strong>データだけ</strong>を GitHub Pages で配信し、
     CDN エンジンからの <code>?kasc=</code> 参照が正しく動くかを検証するためのものです。
+    CDN（kasugai-canvas-web）は<strong>エンジン本体のみ</strong>を配信し、
+    プロジェクトのカタログは持ちません — 変動するプロジェクト一覧は
+    このサイトのような各データホスト側が持つ設計です。
   </p>
   <pre class="mermaid">
 flowchart LR
@@ -127,7 +130,7 @@ flowchart LR
     <tr>
       <td><code>projects.json</code> への登録</td>
       <td>不要</td>
-      <td>このページの一覧生成専用。Canvas のプロジェクト選択ドロップボックスは<strong>エンジン側</strong>の <code>projects/projects.json</code> を読む（<code>?kasc=</code> 直読みのプロジェクトは <code>project.json</code> のタイトルで自動表示される）</td>
+      <td>このページの一覧生成専用。CDN のプロジェクト選択ドロップボックスはエンジン同梱の manifest を読みますが、<strong>CDN には projects/ を同梱しない</strong>ため、外部プロジェクトは <code>?kasc=</code> 直指定で開く形です（開いたものは <code>project.json</code> のタイトルで自動表示される）</td>
     </tr>
   </table>
   <ol>
