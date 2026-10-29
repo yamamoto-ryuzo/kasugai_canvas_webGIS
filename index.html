@@ -32,23 +32,12 @@
     </header>
     <main>
       <section>
-        <h2>1. これは何か</h2>
+        <h2>1. 全体構成 — あなたが置くのはデータだけ</h2>
         <p>
-          KASUGAI Canvas <strong>CDN ホスト版</strong>（<a href="https://yamamoto-ryuzo.github.io/kasugai-canvas-web/">kasugai-canvas-web</a>）向けの
-          <strong>テストデータ（.kasc + DATA/）配信サイト</strong>です。
-        </p>
-        <p>
-          KASUGAI Canvas は <strong>エンジン（プレイヤー本体）とデータ（.kasc + DATA/）が分離</strong>した設計で、
-          <code>?kasc=&lt;URL&gt;</code> で任意の場所のプロジェクトを再生できます。
-          正本リポジトリ <code>kasugai_canvas</code> ではエンジンとデータが一体のため、
-          「エンジン = CDN、データ = 外部ホスト」という実運用構成の動作確認がしにくい課題がありました。
-        </p>
-        <p>
-          このサイトは <strong>データだけ</strong>を GitHub Pages で配信し、
-          CDN エンジンからの <code>?kasc=</code> 参照が正しく動くかを検証するためのものです。
-          CDN（kasugai-canvas-web）は<strong>エンジン本体のみ</strong>を配信し、
-          プロジェクトのカタログは持ちません — 変動するプロジェクト一覧は
-          このサイトのような各データホスト側が持つ設計です。
+          KASUGAI Canvas は <strong>エンジン（プレイヤー本体）とデータ（.kasc + DATA/）が分離</strong>した設計です。
+          エンジンは CDN（<a href="https://yamamoto-ryuzo.github.io/kasugai-canvas-web/">kasugai-canvas-web</a>）が配信するため、
+          このサイトに置くべきものは <strong>.kasc + DATA/ のデータだけ</strong>です。
+          CDN はプロジェクトのカタログを持たず、変動するプロジェクト一覧はこのサイトのような各データホスト側が持ちます。
         </p>
         <pre class="mermaid">
 flowchart LR
@@ -70,91 +59,8 @@ flowchart LR
       </section>
 
       <section>
-        <h2>2. URL 形式</h2>
-        <pre id="urlfmt"></pre>
-        <table>
-          <tr><th>要素</th><th>値</th><th>意味</th></tr>
-          <tr>
-            <td><code>&lt;stage&gt;</code></td>
-            <td><code>stable</code>（既定）/ <code>unstable</code> / <code>latest</code></td>
-            <td>CDN の配信チャンネル。stable=安定版・unstable=開発版・latest=stable へのリダイレクト</td>
-          </tr>
-          <tr>
-            <td><code>&lt;engine&gt;</code></td>
-            <td><code>cesium</code> / <code>maplibre</code> / <code>openlayers</code> / <code>leaflet</code> / <code>gsimaps</code></td>
-            <td>再生に使う描画エンジン。<code>cesium</code> がメイン（3D・フル機能）、他は同じ .kasc を読む互換プレイヤー</td>
-          </tr>
-          <tr>
-            <td><code>?kasc=</code></td>
-            <td>.kasc ファイルの URL（要 URL エンコード）</td>
-            <td>このサイト上のプロジェクトを指定。相対参照は .kasc のある URL 基準で解決</td>
-          </tr>
-        </table>
-      </section>
-
-      <section>
-        <h2>3. プロジェクト一覧</h2>
-        <p class="note">リンク先 = CDN ホスト版エンジン + <code>?kasc=このサイトの .kasc</code>。同一プロジェクトを 5 エンジンで開き比べられます。</p>
-        <ul id="plist"><li>読み込み中…</li></ul>
-      </section>
-
-      <section>
-        <h2>4. 収録データ（default プロジェクト）</h2>
-        <p>
-          <code>kasugai_canvas</code> 同梱のサンプルプロジェクトをそのまま配信しています。
-          ローカルデータとリモート URL 直参照の両方を含み、主要な行タイプを網羅しているため
-          CDN エンジン改修時の回帰確認に使えます。
-        </p>
-        <table>
-          <tr><th>行タイプ</th><th>内容</th><th>データの所在</th></tr>
-          <tr><td><code>geojson:</code></td><td>ローカルサンプル（ポイント）</td><td><strong>このサイト内</strong> <code>DATA/sample.geojson</code></td></tr>
-          <tr><td><code>geojson:</code></td><td>東京都 行政区域</td><td>Re:Earth CMS（URL 直参照）</td></tr>
-          <tr><td><code>3dtiles:</code></td><td>千代田区 建築物 LOD1（PLATEAU）</td><td>Re:Earth CMS tileset.json（URL 直参照）</td></tr>
-          <tr><td><code>geoparquet:</code></td><td>NaturalEarth 国ポリゴン</td><td>opengeospatial/geoparquet（GitHub raw 直参照）</td></tr>
-          <tr><td><code>flatgeobuf:</code></td><td>国ポリゴン（FlatGeobuf）</td><td>flatgeobuf/flatgeobuf テストデータ（直参照）</td></tr>
-          <tr><td><code>duckdb:</code> / <code>sql:</code></td><td>SQL 絞り込み（bbox=auto 等）</td><td>同上（SQL で範囲クエリ）</td></tr>
-          <tr><td><code>gpkg:</code></td><td>行政区域（GeoPackage）</td><td>kasugai_canvas repo sample_data（直参照）</td></tr>
-          <tr><td><code>base:</code></td><td>地理院タイル各種 + OpenStreetMap</td><td>公式タイルサーバー</td></tr>
-          <tr><td><code>cam:</code> / <code>bookmark:</code> / <code>theme:</code> / <code>legend:</code></td><td>視点・QGIS ブックマーク・テーマ・凡例</td><td>このサイト内（bookmarks.xml）+ URL</td></tr>
-        </table>
-      </section>
-
-      <section>
-        <h2>5. テストデータの追加方法</h2>
-        <p>再生に必要な最低限は <strong>.kasc ファイル1つだけ</strong>です。必要なファイルと条件は以下の通りです。</p>
-        <table>
-          <tr><th>ファイル</th><th>必須</th><th>条件</th></tr>
-          <tr>
-            <td><code>&lt;id&gt;/kasugai_canvas.kasc</code></td>
-            <td><strong>必須</strong></td>
-            <td><code>?kasc=</code> に渡す URL は <strong>この .kasc ファイルの URL そのもの</strong>（例: <code>…/kasugai_canvas_weGIS/&lt;id&gt;/kasugai_canvas.kasc</code>）。<code>DATA/</code> 等の相対参照はこの URL のフォルダ基準で解決されます。全レイヤーが URL 直参照ならこれだけで動きます</td>
-          </tr>
-          <tr>
-            <td><code>&lt;id&gt;/DATA/</code></td>
-            <td>条件付き</td>
-            <td>.kasc 内で <code>DATA/...</code> 等の相対参照しているローカルデータがある場合のみ（.kasc と同じフォルダに置く）</td>
-          </tr>
-          <tr>
-            <td><code>&lt;id&gt;/project.json</code></td>
-            <td>任意</td>
-            <td>プロジェクト名の表示に使用（無くても再生可）</td>
-          </tr>
-          <tr>
-            <td><code>&lt;id&gt;/bookmarks.xml</code> 等</td>
-            <td>条件付き</td>
-            <td>.kasc の <code>bookmark:</code> 等で参照される場合のみ</td>
-          </tr>
-          <tr>
-            <td><code>projects.json</code> への登録</td>
-            <td><strong>必須</strong>（一覧・選択肢に出すため）</td>
-            <td>このページの一覧 + エンジンのドロップボックス（<code>?kasc=</code> で開いたエンジンが .kasc の祖先として読む群マニフェスト）。未登録・無タイトルの単独プロジェクトは <code>&lt;id&gt;</code>（フォルダ名）をプロジェクト名として扱います</td>
-          </tr>
-        </table>
-        <ol>
-          <li>QGIS プラグイン <code>geo_webview</code> の <code>Export</code> で <code>.kasc + DATA/</code> を出力</li>
-          <li>このリポジトリに <code>&lt;プロジェクトID&gt;/</code> フォルダとして配置</li>
-          <li>一覧に出す場合は <code>projects.json</code> に <code>{"id": "...", "title": "..."}</code> を追記して push（Pages に数分で反映）</li>
-        </ol>
+        <h2>2. 配置するファイル — 必須3点セット</h2>
+        <p>再生に必要な最低限は <strong>.kasc ファイル1つ</strong>、一覧・選択肢に出すには <strong><code>projects.json</code> と <code>&lt;id&gt;/</code> フォルダ</strong>を加えた3点が必須です。</p>
         <div class="ftree">
           <div class="ft-root">kasugai_canvas_weGIS/</div>
           <ul>
@@ -177,10 +83,92 @@ flowchart LR
             </li>
           </ul>
         </div>
+        <table>
+          <tr><th>ファイル</th><th>必須</th><th>条件</th></tr>
+          <tr>
+            <td><code>&lt;id&gt;/kasugai_canvas.kasc</code></td>
+            <td><strong>必須</strong></td>
+            <td><code>?kasc=</code> に渡す URL は <strong>この .kasc ファイルの URL そのもの</strong>（例: <code>…/kasugai_canvas_weGIS/&lt;id&gt;/kasugai_canvas.kasc</code>）。<code>DATA/</code> 等の相対参照はこの URL のフォルダ基準で解決されます。全レイヤーが URL 直参照ならこれだけで動きます</td>
+          </tr>
+          <tr>
+            <td><code>&lt;id&gt;/DATA/</code></td>
+            <td>条件付き</td>
+            <td>.kasc 内で <code>DATA/...</code> 等の相対参照しているローカルデータがある場合のみ（.kasc と同じフォルダに置く）</td>
+          </tr>
+          <tr>
+            <td><code>&lt;id&gt;/project.json</code></td>
+            <td>任意</td>
+            <td>プロジェクト名の表示に使用（無くても再生可）</td>
+          </tr>
+          <tr>
+            <td><code>projects.json</code> への登録</td>
+            <td><strong>必須</strong>（一覧・選択肢に出すため）</td>
+            <td>このページの一覧 + エンジンのドロップボックス（<code>?kasc=</code> で開いたエンジンが .kasc の祖先として読む群マニフェスト）。未登録・無タイトルの単独プロジェクトは <code>&lt;id&gt;</code>（フォルダ名）をプロジェクト名として扱います</td>
+          </tr>
+        </table>
       </section>
 
       <section>
-        <h2>6. 注意点</h2>
+        <h2>3. 追加手順</h2>
+        <ol>
+          <li>QGIS プラグイン <code>geo_webview</code> の <code>Export</code> で <code>.kasc + DATA/</code> を出力</li>
+          <li>このリポジトリに <code>&lt;プロジェクトID&gt;/</code> フォルダとして配置</li>
+          <li><code>projects.json</code> に <code>{"id": "...", "title": "..."}</code> を追記して push（Pages に数分で反映）</li>
+        </ol>
+      </section>
+
+      <section>
+        <h2>4. 再生 URL の形式</h2>
+        <pre id="urlfmt"></pre>
+        <table>
+          <tr><th>要素</th><th>値</th><th>意味</th></tr>
+          <tr>
+            <td><code>&lt;stage&gt;</code></td>
+            <td><code>stable</code>（既定）/ <code>unstable</code> / <code>latest</code></td>
+            <td>CDN の配信チャンネル。stable=安定版・unstable=開発版・latest=stable へのリダイレクト</td>
+          </tr>
+          <tr>
+            <td><code>&lt;engine&gt;</code></td>
+            <td><code>cesium</code> / <code>maplibre</code> / <code>openlayers</code> / <code>leaflet</code> / <code>gsimaps</code></td>
+            <td>再生に使う描画エンジン。<code>cesium</code> がメイン（3D・フル機能）、他は同じ .kasc を読む互換プレイヤー</td>
+          </tr>
+          <tr>
+            <td><code>?kasc=</code></td>
+            <td>.kasc ファイルの URL（要 URL エンコード）</td>
+            <td>このサイト上のプロジェクトを指定。相対参照は .kasc のある URL 基準で解決</td>
+          </tr>
+        </table>
+      </section>
+
+      <section>
+        <h2>5. プロジェクト一覧</h2>
+        <p class="note">リンク先 = CDN ホスト版エンジン + <code>?kasc=このサイトの .kasc</code>。同一プロジェクトを 5 エンジンで開き比べられます。</p>
+        <ul id="plist"><li>読み込み中…</li></ul>
+      </section>
+
+      <section>
+        <h2>6. 収録データ（default プロジェクト）</h2>
+        <p>
+          <code>kasugai_canvas</code> 同梱のサンプルプロジェクトをそのまま配信しています。
+          ローカルデータとリモート URL 直参照の両方を含み、主要な行タイプを網羅しているため
+          CDN エンジン改修時の回帰確認に使えます。
+        </p>
+        <table>
+          <tr><th>行タイプ</th><th>内容</th><th>データの所在</th></tr>
+          <tr><td><code>geojson:</code></td><td>ローカルサンプル（ポイント）</td><td><strong>このサイト内</strong> <code>DATA/sample.geojson</code></td></tr>
+          <tr><td><code>geojson:</code></td><td>東京都 行政区域</td><td>Re:Earth CMS（URL 直参照）</td></tr>
+          <tr><td><code>3dtiles:</code></td><td>千代田区 建築物 LOD1（PLATEAU）</td><td>Re:Earth CMS tileset.json（URL 直参照）</td></tr>
+          <tr><td><code>geoparquet:</code></td><td>NaturalEarth 国ポリゴン</td><td>opengeospatial/geoparquet（GitHub raw 直参照）</td></tr>
+          <tr><td><code>flatgeobuf:</code></td><td>国ポリゴン（FlatGeobuf）</td><td>flatgeobuf/flatgeobuf テストデータ（直参照）</td></tr>
+          <tr><td><code>duckdb:</code> / <code>sql:</code></td><td>SQL 絞り込み（bbox=auto 等）</td><td>同上（SQL で範囲クエリ）</td></tr>
+          <tr><td><code>gpkg:</code></td><td>行政区域（GeoPackage）</td><td>kasugai_canvas repo sample_data（直参照）</td></tr>
+          <tr><td><code>base:</code></td><td>地理院タイル各種 + OpenStreetMap</td><td>公式タイルサーバー</td></tr>
+          <tr><td><code>cam:</code> / <code>bookmark:</code> / <code>theme:</code> / <code>legend:</code></td><td>視点・QGIS ブックマーク・テーマ・凡例</td><td>このサイト内（bookmarks.xml）+ URL</td></tr>
+        </table>
+      </section>
+
+      <section>
+        <h2>7. 注意点</h2>
         <ul>
           <li><strong>.kasc と DATA/ は同じフォルダに置く</strong> —
             <code>DATA/sample.geojson</code> 等の相対参照は .kasc のある URL を基準に解決されます。</li>
