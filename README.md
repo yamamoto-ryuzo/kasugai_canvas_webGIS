@@ -1,4 +1,4 @@
-# kasugai_canvas_weGIS
+# kasugai_canvas_webGIS
 
 KASUGAI Canvas **CDN ホスト版**（[kasugai-canvas-web](https://yamamoto-ryuzo.github.io/kasugai-canvas-web/)）向けの
 **テストデータ（`.kasc` + `DATA/`）配信リポジトリ**です。
@@ -10,7 +10,7 @@ KASUGAI Canvas **CDN ホスト版**（[kasugai-canvas-web](https://yamamoto-ryuz
 ## 構成
 
 ```text
-kasugai_canvas_weGIS/
+kasugai_canvas_webGIS/
 ├─ index.html       # プロジェクト一覧 + エンジン別起動リンク
 ├─ projects.json    # プロジェクトマニフェスト
 └─ <id>/            # プロジェクト（.kasc + DATA/ + 付随ファイル）
@@ -27,7 +27,7 @@ https://yamamoto-ryuzo.github.io/kasugai-canvas-web/<stage>/<engine>/?kasc=<こ�
 例（default プロジェクトを Cesium で開く）:
 
 ```
-https://yamamoto-ryuzo.github.io/kasugai-canvas-web/stable/cesium/?kasc=https%3A%2F%2Fyamamoto-ryuzo.github.io%2Fkasugai_canvas_weGIS%2Fdefault%2Fkasugai_canvas.kasc
+https://yamamoto-ryuzo.github.io/kasugai-canvas-web/stable/cesium/?kasc=https%3A%2F%2Fyamamoto-ryuzo.github.io%2Fkasugai_canvas_webGIS%2Fdefault%2Fkasugai_canvas.kasc
 ```
 
 ## テストデータの追加
