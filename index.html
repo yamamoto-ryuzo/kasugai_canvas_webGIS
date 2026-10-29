@@ -22,16 +22,35 @@
     .ft-tag.opt { background: #eef0f3; color: #5a6577; border: 1px solid #9aa5b1; }
     .ft-tag.cond { background: #fdf3e3; color: #b26a00; border: 1px solid #d9a03f; }
     .ft-note { color: #5a6577; font-family: inherit; font-size: .85em; }
+    .page { display: flex; align-items: flex-start; gap: 20px; max-width: 1240px; margin: 0 auto; }
+    .toc { position: sticky; top: 20px; flex: 0 0 230px; background: rgba(255,255,255,.92); border-radius: 12px; padding: 14px 10px; box-shadow: 0 8px 24px rgba(0,0,0,.18); }
+    .toc .toc-title { font-weight: 700; font-size: .85em; color: #5a6577; padding: 0 .7em .4em; }
+    .toc a { display: block; padding: .42em .7em; border-radius: 6px; color: #333; font-size: .88em; text-decoration: none; }
+    .toc a:hover { background: #eef3f9; }
+    .toc a.active { background: #e8effb; color: #1668b4; font-weight: 700; }
+    @media (max-width: 900px) { .toc { display: none; } }
   </style>
 </head>
 <body>
+  <div class="page">
+  <nav class="toc">
+    <div class="toc-title">目次</div>
+    <a href="#s1">1. 全体構成</a>
+    <a href="#s2">2. 配置するファイル</a>
+    <a href="#s3">3. 追加手順</a>
+    <a href="#s4">4. 再生 URL の形式</a>
+    <a href="#s5">5. プロジェクト一覧</a>
+    <a href="#s6">6. 収録データ</a>
+    <a href="#s7">7. 注意点</a>
+    <a href="#links">関連リンク</a>
+  </nav>
   <div class="container">
     <header>
       <h1>kasugai_canvas_weGIS</h1>
       <p>KASUGAI Canvas CDN ホスト版向け テストデータ（.kasc + DATA/）配信サイト</p>
     </header>
     <main>
-      <section>
+      <section id="s1">
         <h2>1. 全体構成 — あなたが置くのはデータだけ</h2>
         <p>
           KASUGAI Canvas は <strong>エンジン（プレイヤー本体）とデータ（.kasc + DATA/）が分離</strong>した設計です。
@@ -59,7 +78,7 @@ flowchart LR
         </script>
       </section>
 
-      <section>
+      <section id="s2">
         <h2>2. 配置するファイル — 必須3点セット</h2>
         <p>再生に必要な最低限は <strong>.kasc ファイル1つ</strong>、一覧・選択肢に出すには <strong><code>projects.json</code> と <code>&lt;id&gt;/</code> フォルダ</strong>を加えた3点が必須です。</p>
         <div class="ftree">
@@ -109,7 +128,7 @@ flowchart LR
         </table>
       </section>
 
-      <section>
+      <section id="s3">
         <h2>3. 追加手順（ファイル順に設定）</h2>
         <ol>
           <li><strong><code>projects.json</code>【必須】</strong> —
@@ -131,7 +150,7 @@ flowchart LR
         </ol>
       </section>
 
-      <section>
+      <section id="s4">
         <h2>4. 再生 URL の形式</h2>
         <pre id="urlfmt"></pre>
         <table>
@@ -154,13 +173,13 @@ flowchart LR
         </table>
       </section>
 
-      <section>
+      <section id="s5">
         <h2>5. プロジェクト一覧</h2>
         <p class="note">リンク先 = CDN ホスト版エンジン + <code>?kasc=このサイトの .kasc</code>。同一プロジェクトを 5 エンジンで開き比べられます。</p>
         <ul id="plist"><li>読み込み中…</li></ul>
       </section>
 
-      <section>
+      <section id="s6">
         <h2>6. 収録データ（default プロジェクト）</h2>
         <p>
           <code>kasugai_canvas</code> 同梱のサンプルプロジェクトをそのまま配信しています。
@@ -181,7 +200,7 @@ flowchart LR
         </table>
       </section>
 
-      <section>
+      <section id="s7">
         <h2>7. 注意点</h2>
         <ul>
           <li><strong>.kasc と DATA/ は同じフォルダに置く</strong> —
@@ -198,7 +217,7 @@ flowchart LR
         </ul>
       </section>
 
-      <section class="card">
+      <section id="links" class="card">
         <h2>関連リンク</h2>
         <ul>
           <li><a href="https://github.com/yamamoto-ryuzo/kasugai_canvas_weGIS">kasugai_canvas_weGIS（このリポジトリ）</a></li>
@@ -209,6 +228,7 @@ flowchart LR
         </ul>
       </section>
     </main>
+  </div>
   </div>
 
   <script>
@@ -240,6 +260,14 @@ flowchart LR
     }).catch(() => {
       document.getElementById('plist').innerHTML = '<li>projects.json の読み込みに失敗しました</li>';
     });
+    // scrollspy: 目次の現在地ハイライト
+    const tocLinks = [...document.querySelectorAll('.toc a')];
+    const secs = tocLinks.map(a => document.querySelector(a.getAttribute('href')));
+    addEventListener('scroll', () => {
+      let cur = 0;
+      secs.forEach((el, i) => { if (el && el.getBoundingClientRect().top < 120) cur = i; });
+      tocLinks.forEach((a, i) => a.classList.toggle('active', i === cur));
+    }, { passive: true });
   </script>
 </body>
 </html>
