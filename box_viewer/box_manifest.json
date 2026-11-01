@@ -1,0 +1,10 @@
+{
+  "comment": "cloud: パス → Box file_id の解決表。本来は Box 独自アプリの CORS ホワイトリスト経由で folders/items API から動的生成するが、PoC では rclone トークン(アプリ側設定不可)で静的に生成",
+  "folder_id": "433313754953",
+  "files": {
+    "kasugai_canvas.kasc": "2564517662055",
+    "data/sample.geojson": "2564516330376",
+    "data/countries.fgb": "2564521110140",
+    "data/example.parquet": "2564519842946"
+  }
+}

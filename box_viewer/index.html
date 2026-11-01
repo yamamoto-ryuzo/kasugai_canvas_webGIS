@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Box → WASM GIS ビューアー (PoC)</title>
+<link href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  body{font-family:sans-serif;margin:0;display:flex;height:100vh}
+  #map{flex:1}#side{width:430px;padding:10px 14px;overflow:auto;font-size:12px}
+  #log{white-space:pre-wrap}.ok{color:#080}.err{color:#c00}
+  #tokbar{display:none;margin-bottom:8px}#tokbar input{width:70%}
+  .note{color:#5a6577;font-size:.85em}
+</style>
+</head><body>
+<div id="map"></div>
+<div id="side">
+  <h3>Box → fetch直読み → WASM ビューアー (PoC)</h3>
+  <div id="tokbar">
+    <input id="tokin" type="password" placeholder="Box アクセストークンを貼り付け">
+    <button id="tokbtn">保存して実行</button>
+  </div>
+  <div id="log"></div>
+  <p class="note">Box 上の .kasc + DATA/ を Box API + ユーザー単位トークンで直接読み、ブラウザ内でデコードします。トークンは localStorage のみに保存され、コード・共有URLには書き込まれません。</p>
+</div>
+<script type="module">
+const logEl = document.getElementById('log');
+const P = window.__poc = { steps: [], done: false };
+function log(msg, cls) {
+  P.steps.push(msg);
+  const d = document.createElement('div'); if (cls) d.className = cls;
+  d.textContent = msg; logEl.appendChild(d); console.log('[poc]', msg);
+}
+const map = L.map('map').setView([35.2477, 136.9724], 12);
+L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '国土地理院' }).addTo(map);
+const bounds = [];
+
+// ---- トークン取得: .box_token(ローカル開発) → localStorage → 入力欄 ----
+async function getToken() {
+  try {
+    const r = await fetch('./.box_token');
+    if (r.ok) { const t = (await r.text()).trim(); if (t) return t; }
+  } catch {}
+  const saved = localStorage.getItem('boxPocToken');
+  if (saved) return saved;
+  document.getElementById('tokbar').style.display = 'block';
+  log('Box アクセストークンを入力してください（PoC は OAuth PKCE 未実装のため手動注入）');
+  return new Promise(resolve => {
+    document.getElementById('tokbtn').onclick = () => {
+      const t = document.getElementById('tokin').value.trim();
+      if (t) { localStorage.setItem('boxPocToken', t); document.getElementById('tokbar').style.display = 'none'; resolve(t); }
+    };
+  });
+}
+
+// ---- Box 直読みアダプター ----
+let token = null;
+function boxFetch(id, range) {
+  const h = { authorization: 'Bearer ' + token };
+  if (range) h.range = range; // bytes=a-b 形式のみ(Boxはサフィックス -N を拒否)
+  return fetch(`https://api.box.com/2.0/files/${id}/content`, { headers: h });
+}
+// content-range は ACEH で隠されるため、bytes=0- の content-length で総サイズを測る
+const sizeCache = new Map();
+async function boxSize(id) {
+  if (!sizeCache.has(id)) {
+    const r = await boxFetch(id, 'bytes=0-');
+    sizeCache.set(id, Number(r.headers.get('content-length')));
+    r.body && r.body.cancel();
+  }
+  return sizeCache.get(id);
+}
+// hyparquet 用 AsyncBuffer 互換 {byteLength, slice}
+async function boxAsyncBuffer(id) {
+  const size = await boxSize(id);
+  return {
+    byteLength: size,
+    slice: (start, length) => boxFetch(id, `bytes=${start}-${start + (length ?? size) - 1}`).then(r => r.arrayBuffer()),
+  };
+}
+
+try {
+  token = await getToken();
+  const manifest = await (await fetch('./box_manifest.json')).json();
+  const pathId = p => manifest.files[p.toLowerCase()] || manifest.files[p];
+  log('1. .kasc を Box API から直接取得 (file_id=' + pathId('kasugai_canvas.kasc') + ')');
+  const kascRes = await boxFetch(pathId('kasugai_canvas.kasc'));
+  if (!kascRes.ok) throw new Error(`.kasc 取得失敗: HTTP ${kascRes.status}（トークン期限切れ・権限不足の可能性）`);
+  const kasc = await kascRes.text();
+  const layerLines = kasc.split(/\r?\n/).filter(l => l.includes('cloud:'));
+  log(`   .kasc ${kasc.length}B / cloud: レイヤー ${layerLines.length}件`, 'ok');
+  const { wkbToGeoJsonGeometry } = await import('./vector-decode.js');
+  for (const line of layerLines) {
+    const head = line.slice(0, line.indexOf(':'));
+    const [name, cloudUrl] = line.slice(head.length + 1).split('|').map(s => s.trim());
+    const id = pathId(cloudUrl.replace(/^cloud:/, '').toLowerCase());
+    const t0 = performance.now();
+    if (head === 'geojson') {
+      const gj = await (await boxFetch(id)).json();
+      L.geoJSON(gj).addTo(map); bounds.push(gj);
+      log(`2. geojson: ${name} → ${gj.features.length} features (${(performance.now()-t0)|0}ms)`, 'ok');
+    } else if (head === 'flatgeobuf') {
+      const { deserialize } = await import('https://cdn.jsdelivr.net/npm/flatgeobuf@4.6.1/lib/mjs/geojson.js/+esm');
+      const res = await boxFetch(id);
+      const fc = { type: 'FeatureCollection', features: [] };
+      for await (const f of deserialize(res.body)) if (f && f.geometry) fc.features.push(f);
+      L.geoJSON(fc, { style: { color: '#e33' } }).addTo(map); bounds.push(fc);
+      log(`3. flatgeobuf: ${name} → ${fc.features.length} features (${(performance.now()-t0)|0}ms)`, 'ok');
+    } else if (head === 'geoparquet') {
+      const hp = await import('https://cdn.jsdelivr.net/npm/hyparquet@1.31.5/+esm');
+      const hc = await import('https://cdn.jsdelivr.net/npm/hyparquet-compressors@1.1.2/+esm');
+      const file = await boxAsyncBuffer(id);
+      const rows = await hp.parquetReadObjects({ file, compressors: hc.compressors });
+      const fc = { type: 'FeatureCollection', features: [] };
+      for (const row of rows) {
+        const g = row.geometry instanceof Uint8Array ? wkbToGeoJsonGeometry(row.geometry) : row.geometry;
+        if (g) fc.features.push({ type: 'Feature', geometry: g, properties: {} });
+      }
+      L.geoJSON(fc, { style: { color: '#28e' } }).addTo(map); bounds.push(fc);
+      log(`4. geoparquet: ${name} → ${fc.features.length} features (${(performance.now()-t0)|0}ms)`, 'ok');
+    }
+  }
+  if (bounds.length) { const b = L.latLngBounds([]); bounds.forEach(fc => L.geoJSON(fc).eachLayer(l => { try { b.extend(l.getBounds ? l.getBounds() : l.getLatLng()) } catch{} })); if (b.isValid()) map.fitBounds(b.pad(0.3)); }
+  P.done = true; log('=== 全レイヤー読込完了 ===', 'ok');
+} catch (e) { P.error = String(e); P.done = true; log('ERROR: ' + (e && e.stack || e), 'err'); }
+</script></body></html>
