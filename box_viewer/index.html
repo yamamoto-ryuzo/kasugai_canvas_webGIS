@@ -9,18 +9,21 @@
   #map{flex:1}#side{width:430px;padding:10px 14px;overflow:auto;font-size:12px}
   #log{white-space:pre-wrap}.ok{color:#080}.err{color:#c00}
   #tokbar{display:none;margin-bottom:8px}#tokbar input{width:70%}
+  #loginbar{display:none;margin-bottom:8px}
   .note{color:#5a6577;font-size:.85em}
+  button{cursor:pointer}
 </style>
 </head><body>
 <div id="map"></div>
 <div id="side">
   <h3>Box → fetch直読み → WASM ビューアー (PoC)</h3>
-  <div id="tokbar">
-    <input id="tokin" type="password" placeholder="Box アクセストークンを貼り付け">
-    <button id="tokbtn">保存して実行</button>
+  <div id="loginbar"><button id="loginbtn">Box でログイン</button>
+    <details style="margin-top:6px"><summary>開発用: トークン手動注入</summary>
+      <input id="tokin" type="password" placeholder="access_token"><button id="tokbtn">設定</button>
+    </details>
   </div>
   <div id="log"></div>
-  <p class="note">Box 上の .kasc + DATA/ を Box API + ユーザー単位トークンで直接読み、ブラウザ内でデコードします。トークンは localStorage のみに保存され、コード・共有URLには書き込まれません。</p>
+  <p class="note">Box 上の .kasc + DATA/ を Box API + OAuth (PKCE) で直接読み、ブラウザ内でデコードします。トークンは localStorage のみに保存され、コード・共有URLには書き込まれません。</p>
 </div>
 <script type="module">
 const logEl = document.getElementById('log');
@@ -34,32 +37,94 @@ const map = L.map('map').setView([35.2477, 136.9724], 12);
 L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '国土地理院' }).addTo(map);
 const bounds = [];
 
-// ---- トークン取得: .box_token(ローカル開発) → localStorage → 入力欄 ----
-async function getToken() {
-  try {
+// ================= Box OAuth (PKCE) =================
+const BOX_CLIENT_ID = "7s61d3ekjfzmb24m20u0epg5qo6ndiqq";
+const BOX_AUTHORIZE_URL = "https://account.box.com/api/oauth2/authorize";
+const BOX_TOKEN_URL = "https://api.box.com/oauth2/token";
+const K_ACCESS = "boxViewAccess", K_REFRESH = "boxViewRefresh", K_EXP = "boxViewExp";
+const K_VERIFIER = "boxViewPkce", K_STATE = "boxViewState", K_RET = "boxViewReturn";
+const redirectUri = () => location.origin + location.pathname;
+const b64u = b => btoa(String.fromCharCode(...b)).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+const rand = n => { const a = new Uint8Array(n); crypto.getRandomValues(a); return b64u(a); };
+async function sha256u(s) { return b64u(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)))); }
+function storeTokens(d) {
+  localStorage.setItem(K_ACCESS, d.access_token);
+  if (d.refresh_token) localStorage.setItem(K_REFRESH, d.refresh_token);
+  localStorage.setItem(K_EXP, String(Date.now() + Math.max(Number(d.expires_in||3600)-60,60)*1000));
+}
+function clearTokens(){ [K_ACCESS,K_REFRESH,K_EXP].forEach(k=>localStorage.removeItem(k)); }
+
+async function tokenRequest(params) {
+  const r = await fetch(BOX_TOKEN_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams(params).toString(),
+  });
+  const d = await r.json().catch(()=>({}));
+  if (!r.ok) throw new Error(d.error_description || d.error || `HTTP ${r.status}`);
+  if (!d.access_token) throw new Error("アクセストークンを取得できませんでした");
+  storeTokens(d);
+}
+
+async function handleRedirect() {
+  const q = new URLSearchParams(location.search);
+  const code = q.get("code"), state = q.get("state"), err = q.get("error");
+  if (!code && !err) return false;
+  const exp = sessionStorage.getItem(K_STATE)||"", ver = sessionStorage.getItem(K_VERIFIER)||"";
+  const ret = sessionStorage.getItem(K_RET)||"";
+  sessionStorage.removeItem(K_STATE); sessionStorage.removeItem(K_VERIFIER); sessionStorage.removeItem(K_RET);
+  history.replaceState(null,"",location.pathname + (ret && !ret.includes("code=") ? ret : ""));
+  if (err) throw new Error(q.get("error_description")||err);
+  if (!state || state!==exp) throw new Error("OAuth state が一致しません");
+  if (!ver) throw new Error("PKCE verifier がありません（もう一度ログインしてください）");
+  await tokenRequest({ grant_type:"authorization_code", client_id:BOX_CLIENT_ID, code, redirect_uri:redirectUri(), code_verifier:ver });
+  log("Box ログイン成功", "ok");
+  return true;
+}
+
+async function startLogin() {
+  const ver = rand(48), state = rand(24);
+  sessionStorage.setItem(K_VERIFIER, ver); sessionStorage.setItem(K_STATE, state);
+  sessionStorage.setItem(K_RET, location.search + location.hash);
+  const p = new URLSearchParams({
+    response_type:"code", client_id:BOX_CLIENT_ID, redirect_uri:redirectUri(),
+    state, code_challenge: await sha256u(ver), code_challenge_method:"S256",
+  });
+  location.assign(`${BOX_AUTHORIZE_URL}?${p}`);
+}
+
+async function ensureToken() {
+  if (await handleRedirect()) return localStorage.getItem(K_ACCESS);
+  try { // ローカル開発用ショートカット
     const r = await fetch('./.box_token');
-    if (r.ok) { const t = (await r.text()).trim(); if (t) return t; }
+    if (r.ok) { const t=(await r.text()).trim(); if (t) { log("(.box_token からトークン取得 — 開発用)"); return t; } }
   } catch {}
-  const saved = localStorage.getItem('boxPocToken');
-  if (saved) return saved;
-  document.getElementById('tokbar').style.display = 'block';
-  log('Box アクセストークンを入力してください（PoC は OAuth PKCE 未実装のため手動注入）');
-  return new Promise(resolve => {
+  const acc = localStorage.getItem(K_ACCESS)||"", ref = localStorage.getItem(K_REFRESH)||"";
+  const exp = Number(localStorage.getItem(K_EXP)||"0");
+  if (acc && Date.now() < exp) return acc;
+  if (ref) {
+    try { await tokenRequest({ grant_type:"refresh_token", client_id:BOX_CLIENT_ID, refresh_token:ref }); return localStorage.getItem(K_ACCESS); }
+    catch(e){ clearTokens(); log("トークン更新失敗 → 再ログイン要: "+e, "err"); }
+  }
+  document.getElementById('loginbar').style.display='block';
+  log("Box にログインしてください（OAuth PKCE）");
+  return new Promise(res => {
+    document.getElementById('loginbtn').onclick = startLogin;
     document.getElementById('tokbtn').onclick = () => {
       const t = document.getElementById('tokin').value.trim();
-      if (t) { localStorage.setItem('boxPocToken', t); document.getElementById('tokbar').style.display = 'none'; resolve(t); }
+      if (t) { document.getElementById('loginbar').style.display='none'; res(t); }
     };
   });
 }
 
-// ---- Box 直読みアダプター ----
+// ================= Box 直読みアダプター =================
 let token = null;
+const hdr = extra => Object.assign({ authorization:'Bearer '+token }, extra||{});
 function boxFetch(id, range) {
-  const h = { authorization: 'Bearer ' + token };
+  const h = hdr();
   if (range) h.range = range; // bytes=a-b 形式のみ(Boxはサフィックス -N を拒否)
-  return fetch(`https://api.box.com/2.0/files/${id}/content`, { headers: h });
+  return fetch(`https://api.box.com/2.0/files/${id}/content`, { headers:h });
 }
-// content-range は ACEH で隠されるため、bytes=0- の content-length で総サイズを測る
 const sizeCache = new Map();
 async function boxSize(id) {
   if (!sizeCache.has(id)) {
@@ -69,7 +134,6 @@ async function boxSize(id) {
   }
   return sizeCache.get(id);
 }
-// hyparquet 用 AsyncBuffer 互換 {byteLength, slice}
 async function boxAsyncBuffer(id) {
   const size = await boxSize(id);
   return {
@@ -78,13 +142,35 @@ async function boxAsyncBuffer(id) {
   };
 }
 
-try {
-  token = await getToken();
+// cloud: パス → file_id 解決。folders/items が使えれば動的解決(CORS登録要)、
+// 403 等なら box_manifest.json の静的表にフォールバック
+async function buildResolver(rootFolderId) {
+  const dyn = {};
+  try {
+    const walk = async (folderId, prefix) => {
+      const r = await fetch(`https://api.box.com/2.0/folders/${folderId}/items?fields=id,name,type&limit=1000`, { headers: hdr() });
+      if (!r.ok) throw new Error(`folders/items HTTP ${r.status}`);
+      for (const e of (await r.json()).entries||[]) {
+        if (e.type === 'file') dyn[(prefix + e.name).toLowerCase()] = e.id;
+        else if (e.type === 'folder') await walk(e.id, prefix + e.name + '/');
+      }
+    };
+    await walk(rootFolderId, '');
+    if (Object.keys(dyn).length) { log(`folders/items でパス動的解決 (${Object.keys(dyn).length} files)`, "ok"); return p => dyn[p.toLowerCase()]; }
+  } catch (e) { log(`動的解決失敗 (${e}) → manifest フォールバック`); }
   const manifest = await (await fetch('./box_manifest.json')).json();
-  const pathId = p => manifest.files[p.toLowerCase()] || manifest.files[p];
-  log('1. .kasc を Box API から直接取得 (file_id=' + pathId('kasugai_canvas.kasc') + ')');
+  return p => manifest.files[p.toLowerCase()] || manifest.files[p];
+}
+
+// ================= メイン =================
+try {
+  token = await ensureToken();
+  const params = new URLSearchParams(location.search);
+  const rootFolder = params.get('folder') || (await (await fetch('./box_manifest.json')).json()).folder_id;
+  const pathId = await buildResolver(rootFolder);
+  log('1. .kasc を Box API から直接取得 (file_id=' + (pathId('kasugai_canvas.kasc')||'?') + ')');
   const kascRes = await boxFetch(pathId('kasugai_canvas.kasc'));
-  if (!kascRes.ok) throw new Error(`.kasc 取得失敗: HTTP ${kascRes.status}（トークン期限切れ・権限不足の可能性）`);
+  if (!kascRes.ok) throw new Error(`.kasc 取得失敗: HTTP ${kascRes.status}（権限不足・期限切れの可能性）`);
   const kasc = await kascRes.text();
   const layerLines = kasc.split(/\r?\n/).filter(l => l.includes('cloud:'));
   log(`   .kasc ${kasc.length}B / cloud: レイヤー ${layerLines.length}件`, 'ok');
@@ -93,6 +179,7 @@ try {
     const head = line.slice(0, line.indexOf(':'));
     const [name, cloudUrl] = line.slice(head.length + 1).split('|').map(s => s.trim());
     const id = pathId(cloudUrl.replace(/^cloud:/, '').toLowerCase());
+    if (!id) { log(`   skip: ${cloudUrl} の file_id が解決できません`, "err"); continue; }
     const t0 = performance.now();
     if (head === 'geojson') {
       const gj = await (await boxFetch(id)).json();
