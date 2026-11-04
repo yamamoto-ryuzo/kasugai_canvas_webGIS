@@ -118,12 +118,17 @@ async function ensureToken() {
 }
 
 // ================= Box 直読みアダプター =================
+// ?boxapi=<CCGプロキシ等のAPI前置URL> で Worker 経由の匿名モード。
+// 既定は api.box.com 直読み（OAuth/手動トークンが必要）
+const _params = new URLSearchParams(location.search);
+const API_BASE = (_params.get('boxapi') || 'https://api.box.com/2.0').replace(/\/+$/,'');
+const serverAuth = !API_BASE.startsWith('https://api.box.com');
 let token = null;
-const hdr = extra => Object.assign({ authorization:'Bearer '+token }, extra||{});
+const hdr = () => (token ? { authorization:'Bearer '+token } : {});
 function boxFetch(id, range) {
   const h = hdr();
   if (range) h.range = range; // bytes=a-b 形式のみ(Boxはサフィックス -N を拒否)
-  return fetch(`https://api.box.com/2.0/files/${id}/content`, { headers:h });
+  return fetch(`${API_BASE}/files/${id}/content`, { headers:h });
 }
 const sizeCache = new Map();
 async function boxSize(id) {
@@ -148,7 +153,7 @@ async function buildResolver(rootFolderId) {
   const dyn = {};
   try {
     const walk = async (folderId, prefix) => {
-      const r = await fetch(`https://api.box.com/2.0/folders/${folderId}/items?fields=id,name,type&limit=1000`, { headers: hdr() });
+      const r = await fetch(`${API_BASE}/folders/${folderId}/items?fields=id,name,type&limit=1000`, { headers: hdr() });
       if (!r.ok) throw new Error(`folders/items HTTP ${r.status}`);
       for (const e of (await r.json()).entries||[]) {
         if (e.type === 'file') dyn[(prefix + e.name).toLowerCase()] = e.id;
@@ -164,7 +169,7 @@ async function buildResolver(rootFolderId) {
 
 // ================= メイン =================
 try {
-  token = await ensureToken();
+  token = serverAuth ? null : await ensureToken(); // Worker 経由なら認証不要
   const params = new URLSearchParams(location.search);
   const rootFolder = params.get('folder') || (await (await fetch('./box_manifest.json')).json()).folder_id;
   const pathId = await buildResolver(rootFolder);
