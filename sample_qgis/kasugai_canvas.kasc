@@ -36,7 +36,7 @@ base: 地理院タイル 標準地図 | https://cyberjapandata.gsi.go.jp/xyz/std
 base: 地理院タイル 淡色地図 | https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png | 出典：国土地理院 | maxZoom=18 | minZoom=2 | bbox=122,19,155,47
 base: 地理院タイル 全国最新写真 | https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg | 出典：国土地理院 | maxZoom=18 | minZoom=2 | bbox=122,19,155,47
 base: OpenStreetMap | https://tile.openstreetmap.org/{z}/{x}/{y}.png | (c) OpenStreetMap contributors | maxZoom=19
-cam:QGIS|35.726266|139.432220|h=24082|p=-90
+cam:QGIS|35.685278|139.778045|h=3010|p=-90
 bookmark: bookmarks.xml
 group: サンプル | expanded
 group: サンプル / DM（スタイルサンプル） | expanded
@@ -45,8 +45,8 @@ group: 国土数値情報 | expanded
 group: 国土数値情報 / 政策区域 | expanded
 group: 国土数値情報 / 政策区域 / 行政地域 | expanded
 group: 国土数値情報 / 政策区域 / 行政地域 / 表示・非表示 | expanded
-group: 図郭 | expanded
-group: 図郭 / 全国標準地域メッシュ | expanded
+group: 図郭 | collapsed
+group: 図郭 / 全国標準地域メッシュ | collapsed
 group: 背景図 | expanded
 group: 背景図 / Google | expanded
 group: 背景図 / 地形図（地理院） | expanded
@@ -55,6 +55,8 @@ group: 背景図 / 空中写真 | collapsed
 group: 背景図 / 年度別空中写真 | collapsed
 group: 背景図 / 標高 | collapsed
 cam:QGIS3D 3Dマップ 1|35.108607|139.597371|h=16075|p=-12.5|d=4.1
+terrain: qgis | generator=online
+light: 3Dマップ 1 | az=340.6 | el=15.6
 geojson: サンプル/DM（スタイルサンプル）/DM_C | DATA/DM_C.geojson | on | style=DATA/DM_C.qml
 geojson: サンプル/DM（スタイルサンプル）/DM_1 | DATA/DM_1.geojson | on | style=DATA/DM_1.qml
 geojson: サンプル/DM（スタイルサンプル）/DM_3 | DATA/DM_3.geojson | on | style=DATA/DM_3.qml
@@ -65,6 +67,7 @@ gpkg: 国土数値情報/政策区域/行政地域/表示・非表示/都道府�
 gpkg: 国土数値情報/政策区域/行政地域/表示・非表示/市区町村名 | DATA/layer_2.gpkg | on | table=dummy | style=DATA/layer_3.qml
 gpkg: 図郭/全国標準地域メッシュ/2次メッシュ（約10㎞四方） | DATA/2_10.gpkg | off | table=2次メッシュ（約10㎞四方） | style=DATA/2_10.qml
 gpkg: 図郭/全国標準地域メッシュ/5kmメッシュ（約5km四方） | DATA/5km_5km.gpkg | off | table=5kmメッシュ（約5km四方） | style=DATA/5km_5km.qml
+gpkg: 図郭/全国標準地域メッシュ/3次メッシュ（約1km四方） | DATA/3_1km.gpkg | off | table=3次メッシュ（約1km四方） | style=DATA/3_1km.qml
 theme: テーマ
 theme: テーマ2 | サンプル/DM（スタイルサンプル）/DM_C;style=DATA/DM_C__2.qml | サンプル/DM（スタイルサンプル）/DM_1;style=DATA/DM_1__2.qml | サンプル/DM（スタイルサンプル）/DM_3;style=DATA/DM_3__2.qml | 国土数値情報/政策区域/行政地域/行政区域;style=DATA/layer__2.qml | 国土数値情報/政策区域/行政地域/表示・非表示/都道府県名;style=DATA/layer_2__2.qml | 国土数値情報/政策区域/行政地域/表示・非表示/市区町村名;style=DATA/layer_3__2.qml
 theme: 検索前 | 国土数値情報/政策区域/行政地域/行政区域;style=DATA/layer__layer_5.qml | 国土数値情報/政策区域/行政地域/表示・非表示/都道府県名;style=DATA/layer_2__layer_5.qml | 国土数値情報/政策区域/行政地域/表示・非表示/市区町村名;style=DATA/layer_3__layer_5.qml
