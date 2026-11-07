@@ -6,5 +6,9 @@
   {
     "id": "sample2",
     "title": "サンプルプロジェクト2"
+  },
+  {
+    "id": "sample_qgis",
+    "title": "QGIS プロジェクト（SampleProjectFile）"
   }
 ]
