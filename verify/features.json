@@ -1,0 +1,126 @@
+{
+  "component": "kasugai_canvas_webGIS",
+  "component_type": "static_data_host",
+  "version": "",
+  "driver": {
+    "type": "static",
+    "detect": "-",
+    "launch": "-",
+    "ready": "-",
+    "control": "-",
+    "detected_from": "manifest"
+  },
+  "updated": "2026-11-15T22:57:22+09:00",
+  "features": [
+    {
+      "id": "data.project.default",
+      "kind": "data_source",
+      "name": "プロジェクト default",
+      "source": "default/",
+      "signature": "default/kasugai_canvas.kasc",
+      "summary": "manifest掲載プロジェクト(kasc 3912B, DATA 1files)",
+      "needs_runtime": false,
+      "standalone_ok": true,
+      "depends": [],
+      "verify": {
+        "standalone": "静的検証",
+        "integrated": ""
+      },
+      "last_result": "pass",
+      "last_verified": "2026-11-15T22:57:22+09:00",
+      "note": "project.json JSON妥当・kasc実在・DATA実在"
+    },
+    {
+      "id": "data.project.sample2",
+      "kind": "data_source",
+      "name": "プロジェクト sample2",
+      "source": "sample2/",
+      "signature": "sample2/kasugai_canvas.kasc",
+      "summary": "manifest掲載プロジェクト(kasc 2077B, DATA 1files)",
+      "needs_runtime": false,
+      "standalone_ok": true,
+      "depends": [],
+      "verify": {
+        "standalone": "静的検証",
+        "integrated": ""
+      },
+      "last_result": "pass",
+      "last_verified": "2026-11-15T22:57:22+09:00",
+      "note": "project.json JSON妥当・kasc実在・DATA実在"
+    },
+    {
+      "id": "data.project.sample_qgis",
+      "kind": "data_source",
+      "name": "プロジェクト sample_qgis",
+      "source": "sample_qgis/",
+      "signature": "sample_qgis/kasugai_canvas.kasc",
+      "summary": "manifest掲載プロジェクト(kasc 9537B, DATA 75files)",
+      "needs_runtime": false,
+      "standalone_ok": true,
+      "depends": [],
+      "verify": {
+        "standalone": "静的検証",
+        "integrated": ""
+      },
+      "last_result": "pass",
+      "last_verified": "2026-11-15T22:57:22+09:00",
+      "note": "project.json JSON妥当・kasc実在・DATA実在"
+    },
+    {
+      "id": "data.manifest.projects_json",
+      "kind": "data_source",
+      "name": "群マニフェスト projects.json",
+      "source": "projects.json",
+      "signature": "projects.json",
+      "summary": "3プロジェクト列挙(default/sample2/sample_qgis)",
+      "needs_runtime": false,
+      "standalone_ok": true,
+      "depends": [],
+      "verify": {
+        "standalone": "静的検証",
+        "integrated": ""
+      },
+      "last_result": "pass",
+      "last_verified": "2026-11-15T22:57:22+09:00",
+      "note": "全 id に対応ディレクトリ+kasc実在"
+    },
+    {
+      "id": "site.pages_live",
+      "kind": "data_source",
+      "name": "GitHub Pages 配信",
+      "source": "https://yamamoto-ryuzo.github.io/kasugai_canvas_webGIS/projects.json",
+      "signature": "GET",
+      "summary": "projects.json が CDN 経由で 200",
+      "needs_runtime": true,
+      "standalone_ok": false,
+      "depends": [
+        "GitHub Pages"
+      ],
+      "verify": {
+        "standalone": "",
+        "integrated": ""
+      },
+      "last_result": "pass",
+      "last_verified": "2026-11-15T22:57:22+09:00",
+      "note": "curl 200"
+    },
+    {
+      "id": "tool.box_viewer",
+      "kind": "ui_control",
+      "name": "Box viewer",
+      "source": "box_viewer/",
+      "signature": "box_viewer/index.html",
+      "summary": "box_manifest.json 駆動ビューア",
+      "needs_runtime": false,
+      "standalone_ok": true,
+      "depends": [],
+      "verify": {
+        "standalone": "静的検証",
+        "integrated": ""
+      },
+      "last_result": "pass",
+      "last_verified": "2026-11-15T22:57:22+09:00",
+      "note": "index.html + box_manifest.json + vector-decode.js 実在"
+    }
+  ]
+}
