@@ -22,6 +22,25 @@
     .ft-tag.opt { background: #eef0f3; color: #5a6577; border: 1px solid #9aa5b1; }
     .ft-tag.cond { background: #fdf3e3; color: #b26a00; border: 1px solid #d9a03f; }
     .ft-note { color: #5a6577; font-family: inherit; font-size: .85em; }
+    .ptoolbar { margin: .6em 0 1em; }
+    #psearch { box-sizing: border-box; width: 100%; max-width: 34em; padding: .45em .7em; font-size: 1em; border: 1px solid #c9d2dc; border-radius: 8px; }
+    .ptags { margin-top: .5em; display: flex; flex-wrap: wrap; gap: .4em; }
+    .chip { display: inline-block; font-size: .72em; padding: .15em .6em; border-radius: 10px; border: 1px solid #9aa5b1; background: #eef0f3; color: #445064; white-space: nowrap; }
+    .chip.fmt { background: #e9f7ee; color: #237a44; border-color: #2e9e56; font-family: ui-monospace, Consolas, monospace; }
+    .ptags .chip { cursor: pointer; }
+    .ptags .chip.active { background: #237a44; color: #fff; border-color: #237a44; }
+    .pcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+    .pcard { border: 1px solid #c9d2dc; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; }
+    .pthumb { aspect-ratio: 16 / 9; background: linear-gradient(135deg, #dde7f0 0%, #eef0f3 60%, #e9f7ee 100%); display: flex; align-items: center; justify-content: center; color: #5a6577; font-size: .95em; border-bottom: 1px solid #c9d2dc; }
+    .pthumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .pbody { padding: .7em .9em .9em; }
+    .pbody .ptitle { margin: 0 0 .15em; }
+    .pdesc { color: #445064; font-size: .88em; margin: .3em 0 .5em; }
+    .pmeta { color: #5a6577; font-size: .8em; margin: .4em 0; }
+    .pchips { margin: .35em 0; display: flex; flex-wrap: wrap; gap: .35em; }
+    .perr { color: #a33; font-size: .8em; }
+    .pempty { color: #5a6577; }
+    .engines { font-size: .85em; margin-top: .25em; }
   </style>
 </head>
 <body>
@@ -45,8 +64,13 @@
 
       <section>
         <h2>2. プロジェクト一覧</h2>
-        <p class="note">リンク先 = CDN ホスト版エンジン + <code>?kasc=このサイトの .kasc</code>。同一プロジェクトを 5 エンジンで開き比べられます。</p>
-        <ul id="plist"><li>読み込み中…</li></ul>
+        <p class="note">リンク先 = CDN ホスト版エンジン + <code>?kasc=このサイトの .kasc</code>。同一プロジェクトを 5 エンジンで開き比べられます。
+          プロジェクト名・説明・タグ・データ形式・エンジン名で検索できます。</p>
+        <div class="ptoolbar">
+          <input id="psearch" type="search" placeholder="検索（例: 3dtiles, QGIS, geojson）" aria-label="プロジェクト検索">
+          <div id="ptags" class="ptags"></div>
+        </div>
+        <div id="plist" class="pcards">読み込み中…</div>
       </section>
 
       <section>
@@ -103,28 +127,97 @@
 
   <script>
     const ENGINES = ['cesium', 'maplibre', 'openlayers', 'leaflet', 'gsimaps'];
+    const DATA_TYPES = ['3dtiles', 'geojson', 'geoparquet', 'flatgeobuf', 'gpkg', 'duckdb', 'kml', 'csv', 'mvt', 'pmtiles', 'cog', 'wms', 'wmts', 'zip', 'image', 'qgis'];
     const CDN = 'https://yamamoto-ryuzo.github.io/kasugai-canvas-web';
     const base = location.origin + location.pathname.replace(/[^/]*$/, '');
+    const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+    let projects = [];
+    let query = '';
+    let activeTag = null;
+
+    function kascFormats(text) {
+      const types = new Set();
+      for (const line of text.split('\n')) {
+        const t = line.split(':', 1)[0].trim().toLowerCase();
+        if (DATA_TYPES.includes(t)) types.add(t);
+      }
+      return ['kasc', ...[...types].sort()];
+    }
+
+    function matches(p) {
+      if (activeTag && !(p.tags || []).includes(activeTag)) return false;
+      if (!query) return true;
+      const hay = [p.id, p.title, p.description || '', ...(p.tags || []), ...(p.formats || []), ...(p.engines || ENGINES)]
+        .join(' ').toLowerCase();
+      return query.toLowerCase().split(/\s+/).every(w => hay.includes(w));
+    }
+
+    function engineLinks(p, channel) {
+      const kasc = base + p.id + '/kasugai_canvas.kasc';
+      return (p.engines || ENGINES).map(e =>
+        `<a href="${CDN}/${channel}/${e}/?kasc=${encodeURIComponent(kasc)}" target="_blank" rel="noopener">${e}</a>`
+      ).join(' ');
+    }
+
+    function renderTagBar() {
+      const tags = [...new Set(projects.flatMap(p => p.tags || []))].sort();
+      document.getElementById('ptags').innerHTML = tags.map(t =>
+        `<span class="chip${t === activeTag ? ' active' : ''}" data-tag="${esc(t)}">#${esc(t)}</span>`
+      ).join('');
+    }
+
+    function render() {
+      renderTagBar();
+      const ul = document.getElementById('plist');
+      const shown = projects.filter(matches);
+      if (!shown.length) {
+        ul.innerHTML = '<p class="pempty">条件に一致するプロジェクトがありません</p>';
+        return;
+      }
+      ul.innerHTML = shown.map(p => {
+        const thumb = p.thumbnail
+          ? `<img src="${esc(p.thumbnail)}" alt="${esc(p.title)} のサムネイル" loading="lazy">`
+          : `<span>${esc(p.id)}</span>`;
+        const meta = [
+          p.updated ? `更新: ${esc(p.updated)}` : '',
+          p.bbox ? `範囲: ${p.bbox.map(n => esc(n)).join(', ')}` : ''
+        ].filter(Boolean).join(' ／ ');
+        return `<article class="pcard">
+          <div class="pthumb">${thumb}</div>
+          <div class="pbody">
+            <h3 class="ptitle">${esc(p.title)} <code>${esc(p.id)}</code></h3>
+            ${p.description ? `<p class="pdesc">${esc(p.description)}</p>` : ''}
+            ${(p.tags || []).length ? `<div class="pchips">${p.tags.map(t => `<span class="chip">#${esc(t)}</span>`).join('')}</div>` : ''}
+            ${(p.formats || []).length ? `<div class="pchips">${p.formats.map(f => `<span class="chip fmt">${esc(f)}</span>`).join('')}</div>` : ''}
+            ${p.kascError ? `<p class="perr">.kasc の読み込みに失敗: ${esc(p.kascError)}</p>` : ''}
+            ${meta ? `<p class="pmeta">${meta}</p>` : ''}
+            <div class="engines">stable: ${engineLinks(p, 'stable')}</div>
+            <div class="engines">unstable: ${engineLinks(p, 'unstable')}</div>
+          </div>
+        </article>`;
+      }).join('');
+    }
+
+    document.getElementById('psearch').addEventListener('input', e => { query = e.target.value.trim(); render(); });
+    document.getElementById('ptags').addEventListener('click', e => {
+      const chip = e.target.closest('.chip');
+      if (!chip) return;
+      activeTag = chip.dataset.tag === activeTag ? null : chip.dataset.tag;
+      render();
+    });
 
     fetch('projects.json').then(r => r.json()).then(list => {
-      const ul = document.getElementById('plist');
-      ul.innerHTML = '';
-      for (const p of list) {
-        const kasc = base + p.id + '/kasugai_canvas.kasc';
-        const li = document.createElement('li');
-        const links = ENGINES.map(e =>
-          `<a href="${CDN}/stable/${e}/?kasc=${encodeURIComponent(kasc)}" target="_blank" rel="noopener">${e}</a>`
-        ).join(' ');
-        const dev = ENGINES.map(e =>
-          `<a href="${CDN}/unstable/${e}/?kasc=${encodeURIComponent(kasc)}" target="_blank" rel="noopener">${e}</a>`
-        ).join(' ');
-        li.innerHTML = `<strong>${p.title}</strong>（<code>${p.id}</code>）` +
-          `<div class="engines">stable: ${links}</div>` +
-          `<div class="engines">unstable: ${dev}</div>`;
-        ul.appendChild(li);
-      }
-    }).catch(() => {
-      document.getElementById('plist').innerHTML = '<li>projects.json の読み込みに失敗しました</li>';
+      projects = list;
+      return Promise.all(list.map(p =>
+        fetch(p.id + '/kasugai_canvas.kasc').then(r => {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.text();
+        }).then(text => { p.formats = kascFormats(text); })
+         .catch(err => { p.kascError = err.message; })
+      ));
+    }).then(render).catch(() => {
+      document.getElementById('plist').innerHTML = '<p class="pempty">projects.json の読み込みに失敗しました</p>';
     });
   </script>
 </body>

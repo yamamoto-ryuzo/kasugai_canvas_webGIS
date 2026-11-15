@@ -1,14 +1,29 @@
 [
   {
     "id": "default",
-    "title": "サンプルプロジェクト"
+    "title": "サンプルプロジェクト",
+    "description": "kasugai_canvas 同梱サンプルをそのまま配信。geojson / 3dtiles / geoparquet / flatgeobuf / gpkg / duckdb 等の主要行タイプを網羅した回帰確認用プロジェクト。",
+    "tags": ["サンプル", "回帰テスト", "東京都", "PLATEAU", "NaturalEarth"],
+    "updated": "2026-11-07",
+    "bbox": [135.4, 34.6, 139.9, 35.8],
+    "thumbnail": "thumbnails/default.svg"
   },
   {
     "id": "sample2",
-    "title": "サンプルプロジェクト2"
+    "title": "サンプルプロジェクト2",
+    "description": "geojson 行のみの最小構成サンプル。ローカル GeoJSON と東京都行政区域（Re:Earth CMS 直参照）を収録。",
+    "tags": ["サンプル", "東京都", "最小構成"],
+    "updated": "2026-11-07",
+    "bbox": [135.4, 34.6, 139.9, 35.8],
+    "thumbnail": "thumbnails/sample2.svg"
   },
   {
     "id": "sample_qgis",
-    "title": "QGIS プロジェクト（SampleProjectFile）"
+    "title": "QGIS プロジェクト（SampleProjectFile）",
+    "description": "QGIS geo_webview からエクスポートしたプロジェクト。QGIS スタイル(.qml)付き GeoJSON/GeoPackage レイヤと地理院タイル・Google ベースマップを収録。",
+    "tags": ["QGIS", "geo_webview", "スタイルサンプル", "GeoPackage"],
+    "updated": "2026-11-07",
+    "bbox": [139.5, 35.0, 139.9, 35.75],
+    "thumbnail": "thumbnails/sample_qgis.svg"
   }
 ]
